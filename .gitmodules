@@ -1,0 +1,6 @@
+[submodule "extras/secp256k1"]
+	path = extras/secp256k1
+	url = https://github.com/mycelium-com/secp256k1
+[submodule "extras/ed25519"]
+	path = extras/ed25519
+	url = https://github.com/mycelium-com/ed25519
