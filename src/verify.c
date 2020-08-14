@@ -3,6 +3,7 @@
 #include "secp256k1.h"
 
 int elliptic_verify(EllipticContext *ctx, const uint8_t *digest, size_t digest_size, uint8_t *signature, size_t signature_size) {
+    // Only valid contexts may be used
     switch (ctx->EllipticType)
     {
     case EllipticED25519:

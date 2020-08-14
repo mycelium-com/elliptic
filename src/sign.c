@@ -3,6 +3,8 @@
 #include "secp256k1.h"
 
 int elliptic_sign(EllipticContext *ctx, const uint8_t *digest, size_t digest_size, uint8_t *signature) {
+
+    // To perform signing operation, we must have private key
     if (ctx->EllipticType) {
         switch (ctx->EllipticType)
         {
@@ -18,5 +20,6 @@ int elliptic_sign(EllipticContext *ctx, const uint8_t *digest, size_t digest_siz
         return 1;
     }
 
+    // Private key is not available
     return 0;
 }
