@@ -4,3 +4,6 @@
 [submodule "extras/ed25519"]
 	path = extras/ed25519
 	url = https://github.com/mycelium-com/ed25519
+[submodule "extras/hashing"]
+	path = extras/hashing
+	url = https://github.com/mycelium-com/hashing
