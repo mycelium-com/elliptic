@@ -5,6 +5,7 @@
 #include <stddef.h>
 
 // Private contexts
+const int EllipticInvalid = 0;
 const int EllipticED25519 = 1;
 const int EllipticSecp256K1 = 2;
 

@@ -6,6 +6,12 @@
 
 int elliptic_init(EllipticContext *ctx, int type, const uint8_t *key, const uint8_t *public_key) {
 
+    // Init as invalid context
+    ctx->EllipticType = EllipticInvalid;
+    ctx->HasPrivate = 0;
+    memset(ctx->PublicKey, 0, sizeof(ctx->PublicKey));
+    memset(ctx->PrivateKey, 0, sizeof(ctx->PrivateKey));
+
     if (key != NULL) {
         switch(type) {
             case EllipticED25519:
