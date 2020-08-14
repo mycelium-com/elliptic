@@ -9,7 +9,7 @@ set(elliptic_src
    src/sign.c
    src/keypair.c
    src/verify.c
-   src/keychain.c
+#   src/keychain.c
 )
 
 add_library(elliptic ${elliptic_src})
