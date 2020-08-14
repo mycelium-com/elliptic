@@ -109,3 +109,45 @@ int elliptic_hd_export_priv(EllipticHDContext *ctx, uint8_t binary[BIP32_EXTKEY_
 
     return 0;
 }
+
+int elliptic_hd_init(EllipticHDContext *ctx, int type, const uint8_t *seed, size_t seed_len) {
+    // MAC hashing keys
+    static const unsigned char hashkey_ed25519[] = {'E','D','2','5','5','1','9',' ','s','e','e','d'};
+    static const unsigned char hashkey_secp256k1[] = {'B','i','t','c','o','i','n',' ','s','e','e','d'};
+
+    // Hashing contexts
+    hmac_sha3_512_ctx hmac_ctx_ed25519;
+    hmac_sha512_ctx hmac_ctx_secp256k1;
+
+    // MAC result
+    unsigned char key_mac[64];
+
+    // Calculate hmac for given seed using hardcoded hash key 
+    switch(type) {
+        case EllipticED25519:
+            hmac_sha3_512_init(&hmac_ctx_ed25519, hashkey_ed25519, sizeof(hashkey_ed25519));
+            hmac_sha3_512_update(&hmac_ctx_ed25519, seed, seed_len);
+            hmac_sha3_512_final(&hmac_ctx_ed25519, key_mac, sizeof(key_mac)); 
+            break;
+        case EllipticSecp256K1:
+            hmac_sha512_init(&hmac_ctx_secp256k1, hashkey_secp256k1, sizeof(hashkey_secp256k1));
+            hmac_sha512_update(&hmac_ctx_secp256k1, seed, seed_len);
+            hmac_sha512_final(&hmac_ctx_secp256k1, key_mac, sizeof(key_mac)); 
+            break;
+        default:
+            return 0;
+    }
+
+    // First part of hash is to be used as key
+    elliptic_init(&ctx->context, type, key_mac, NULL);
+
+    // Second part is used as chain code
+    memcpy(ctx->chaincode, key_mac + 32, 32);
+
+    // Root node params
+    ctx->nDepth = 0;
+    ctx->nChild = 0;
+    memset(ctx->vchFingerprint, 0, sizeof(ctx->vchFingerprint));
+
+    return 1;
+}

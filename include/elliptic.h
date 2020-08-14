@@ -37,6 +37,7 @@ int elliptic_verify(EllipticContext *ctx, const uint8_t *digest, size_t digest_s
 int elliptic_hd_import_pub(EllipticHDContext *ctx, int type, const uint8_t binary[BIP32_EXTKEY_SIZE]);
 int elliptic_hd_import_priv(EllipticHDContext *ctx, int type, const uint8_t binary[BIP32_EXTKEY_SIZE]);
 
+int elliptic_hd_init(EllipticHDContext *ctx, int type, const uint8_t *seed, size_t seed_len);
 int elliptic_hd_export_pub(EllipticHDContext *ctx, uint8_t binary[BIP32_EXTKEY_SIZE]);
 int elliptic_hd_export_priv(EllipticHDContext *ctx, uint8_t binary[BIP32_EXTKEY_SIZE]);
 
