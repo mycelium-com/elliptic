@@ -12,6 +12,7 @@ int elliptic_init(EllipticContext *ctx, int type, const uint8_t *key, const uint
     memset(ctx->PublicKey, 0, sizeof(ctx->PublicKey));
     memset(ctx->PrivateKey, 0, sizeof(ctx->PrivateKey));
 
+    // If we have private key then init signing context
     if (key != NULL) {
         switch(type) {
             case EllipticED25519:
@@ -31,6 +32,8 @@ int elliptic_init(EllipticContext *ctx, int type, const uint8_t *key, const uint
         return 1;
     }
 
+    // If there is no private key, but public key is
+    //  available, then init verification-only context
     if (public_key != NULL) {
         switch(type) {
             case EllipticED25519:
@@ -47,5 +50,6 @@ int elliptic_init(EllipticContext *ctx, int type, const uint8_t *key, const uint
         return 1;        
     }
 
+    // Neither public nor private key has been provided
     return 0;
 }
