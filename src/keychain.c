@@ -59,7 +59,7 @@ int elliptic_hd_import_priv(EllipticHDContext *ctx, int type, const uint8_t bina
     return elliptic_init(&ctx->context, type, binary+42, NULL);
 }
 
-int elliptic_hd_export_pub(EllipticHDContext *ctx, uint8_t binary[BIP32_EXTKEY_SIZE]) {
+int elliptic_hd_export_pub(const EllipticHDContext *ctx, uint8_t binary[BIP32_EXTKEY_SIZE]) {
     if (ctx->context.EllipticType != EllipticInvalid) {
 
         // Create xpub binary representation
@@ -84,7 +84,7 @@ int elliptic_hd_export_pub(EllipticHDContext *ctx, uint8_t binary[BIP32_EXTKEY_S
     return 0;
 }
 
-int elliptic_hd_export_priv(EllipticHDContext *ctx, uint8_t binary[BIP32_EXTKEY_SIZE]) {
+int elliptic_hd_export_priv(const EllipticHDContext *ctx, uint8_t binary[BIP32_EXTKEY_SIZE]) {
     if (ctx->context.HasPrivate) {
 
         // Create xpriv binary representation
