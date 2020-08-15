@@ -46,6 +46,9 @@ int elliptic_hd_export_priv(const EllipticHDContext *ctx, uint8_t binary[BIP32_E
 // Initialization of new HD key derivation context
 int elliptic_hd_init(EllipticHDContext *ctx, int type, const uint8_t *seed, size_t seed_len);
 
+// Derive new HD context
+int elliptic_hd_derive(const EllipticHDContext *ctx, EllipticHDContext *child_ctx, unsigned int nChild);
+
 #ifdef __cplusplus
 }
 #endif

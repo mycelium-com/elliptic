@@ -6,7 +6,27 @@
 
 #include "hmac_sha2.h"
 #include "hmac_sha3.h"
+#include "ripemd160.h"
 
+// ED25519 key fingerprint
+static void BIP32Fingerprint_ed25519(const uint8_t *public_key, uint8_t *public_key_id) {
+     unsigned char tmp_hash[SHA3_256_DIGEST_LENGTH]; 
+
+    // First 4 bytes of RIPEMD160(SHA3-256(0x03 + ed25519 public key))
+    sha3_256(public_key, 33, tmp_hash);
+    ripemd160(tmp_hash, sizeof(tmp_hash), public_key_id); 
+}
+
+// secp256k1 key fingerprint
+static void BIP32Fingerprint_secp256k1(const uint8_t *public_key, uint8_t *public_key_id) {
+     unsigned char tmp_hash[SHA256_DIGEST_SIZE]; 
+
+    // First 4 bytes of RIPEMD160(SHA3-256(0x03 + ed25519 public key))
+    sha256(public_key, 33, tmp_hash);
+    ripemd160(tmp_hash, sizeof(tmp_hash), public_key_id); 
+}
+
+// ED25519 key hashing
 static void BIP32Hash_SHA2(const unsigned char chainCode[32], unsigned int nChild, unsigned char header, const unsigned char data[32], unsigned char output[64])
 {
     unsigned char num[4];
@@ -25,6 +45,7 @@ static void BIP32Hash_SHA2(const unsigned char chainCode[32], unsigned int nChil
     hmac_sha512_final(&hmac_ctx, output, 64);
 }
 
+// secp256k1 key hashing
 static void BIP32Hash_SHA3(const unsigned char chainCode[32], unsigned int nChild, unsigned char header, const unsigned char data[32], unsigned char output[64])
 {
     unsigned char num[4];
@@ -148,6 +169,80 @@ int elliptic_hd_init(EllipticHDContext *ctx, int type, const uint8_t *seed, size
     ctx->nDepth = 0;
     ctx->nChild = 0;
     memset(ctx->vchFingerprint, 0, sizeof(ctx->vchFingerprint));
+
+    return 1;
+}
+
+int elliptic_hd_derive(const EllipticHDContext *ctx, EllipticHDContext *child_ctx, unsigned int nChild) {
+    unsigned int pub_offset;
+    unsigned char bip32_hash[64];
+    unsigned char child_tmp[33];
+    int (*add_scalar)(unsigned char *public_key, unsigned char *private_key, const unsigned char *scalar);
+    void (*BIP32Fingerprint)(const uint8_t public_key[33], uint8_t fingerprint[4]);
+    void (*BIP32Hash)(const unsigned char chainCode[32], unsigned int nChild, unsigned char header, const unsigned char data[32], unsigned char output[64]);
+
+    if ((nChild >> 31) && !ctx->context.HasPrivate) {
+        // An attempt of hardened derivation without private key
+        return 0;
+    }
+
+    switch (ctx->context.EllipticType) {
+        case EllipticED25519:
+            pub_offset = 1;
+            add_scalar = &ed25519_add_scalar;
+            BIP32Hash = &BIP32Hash_SHA3;
+            BIP32Fingerprint = &BIP32Fingerprint_ed25519;
+            break;
+        case EllipticSecp256K1:
+            pub_offset = 0;
+            add_scalar = &secp256k1_add_scalar;
+            BIP32Hash = &BIP32Hash_SHA2;
+            BIP32Fingerprint = &BIP32Fingerprint_secp256k1;
+            break;
+        default:
+            return 0;
+    }
+
+    // Next children
+    child_ctx->nChild = ctx->nChild + 1;
+
+    // Get key fingerprint
+    (*BIP32Fingerprint)(ctx->context.PublicKey, child_ctx->vchFingerprint);
+
+    // Derive child key
+    if ((nChild >> 31) == 0) {
+        // Non-hardened
+        (*BIP32Hash)(ctx->chaincode, nChild, ctx->context.PublicKey[0], ctx->context.PublicKey + 1, bip32_hash);
+
+        // Generate children public key
+        // A = nB + T
+        memcpy(child_tmp, ctx->context.PublicKey, 33);
+        if (!(*add_scalar)(child_tmp + pub_offset, NULL, bip32_hash)) {
+            // Overflow?
+            return 0;
+        }
+
+        // Init child ECC context
+        elliptic_init(&child_ctx->context, ctx->context.EllipticType, NULL, child_tmp);
+
+    } else {
+        // Hardened
+        (*BIP32Hash)(ctx->chaincode, nChild, 0, ctx->context.PrivateKey, bip32_hash);
+
+        // Generate children private key
+        //  a = n + t
+        memcpy(child_tmp, ctx->context.PrivateKey, 32);
+        if (!(*add_scalar)(NULL, child_tmp, bip32_hash)) {
+            // Overflow?
+            return 0;
+        }
+
+        // Init child ECC context
+        elliptic_init(&child_ctx->context, ctx->context.EllipticType, child_tmp, NULL);
+    }
+
+    // Set chain code for child key
+    memcpy(child_ctx->chaincode, bip32_hash+32, 32);
 
     return 1;
 }
