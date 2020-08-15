@@ -246,3 +246,13 @@ int elliptic_hd_derive(const EllipticHDContext *ctx, EllipticHDContext *child_ct
 
     return 1;
 }
+
+void elliptic_hd_neuter(const EllipticHDContext *ctx, EllipticHDContext *public_ctx) {
+    // Copy derivation context
+    public_ctx->nDepth = ctx->nDepth;
+    public_ctx->nChild = ctx->nChild;
+    memcpy(public_ctx->vchFingerprint, ctx->vchFingerprint, 4);
+    memcpy(public_ctx->chaincode, ctx->chaincode, sizeof(ctx->chaincode));
+    // Init ECC context
+    elliptic_init(&public_ctx->context, ctx->context.EllipticType, NULL, ctx->context.PublicKey);
+}
