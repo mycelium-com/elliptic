@@ -14,6 +14,11 @@ int elliptic_init(EllipticContext *ctx, int type, const uint8_t *key, const uint
 
     // If we have private key then init signing context
     if (key != NULL) {
+
+        // Copy private key
+        memcpy(&ctx->PrivateKey, key, 32);
+
+        // Calculate public key
         switch(type) {
             case EllipticED25519:
                 ctx->PublicKey[0] = 0x03;
