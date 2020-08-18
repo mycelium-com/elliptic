@@ -33,7 +33,7 @@ extern "C" {
 // ECDSA operations
 int elliptic_init(EllipticContext *ctx, int type, const uint8_t *key, const uint8_t *public_key);
 int elliptic_sign(EllipticContext *ctx, const uint8_t *digest, size_t digest_size, uint8_t *signature);
-int elliptic_verify(EllipticContext *ctx, const uint8_t *digest, size_t digest_size, uint8_t *signature, size_t signature_size);
+int elliptic_verify(EllipticContext *ctx, const uint8_t *digest, size_t digest_size, const uint8_t *signature, size_t signature_size);
 
 // HD key context import
 int elliptic_hd_import_pub(EllipticHDContext *ctx, int type, const uint8_t binary[BIP32_EXTKEY_SIZE]);
