@@ -27,7 +27,7 @@ int main() {
     }
 
     for(i = 0; i < 10; ++i) {
-        if (elliptic_hd_derive(&ctx, &child, i)) {
+        if (elliptic_hd_derive(&ctx, &child, i, 1)) {
             elliptic_hd_export_priv(&ctx, binary_hd);
             printf("Binary xpriv (0/%d): ", i);
             print(binary_hd, sizeof(binary_hd));

@@ -47,7 +47,7 @@ int elliptic_hd_export_priv(const EllipticHDContext *ctx, uint8_t binary[BIP32_E
 int elliptic_hd_init(EllipticHDContext *ctx, int type, const uint8_t *seed, size_t seed_len);
 
 // Derive new HD context
-int elliptic_hd_derive(const EllipticHDContext *ctx, EllipticHDContext *child_ctx, unsigned int nChild);
+int elliptic_hd_derive(const EllipticHDContext *ctx, EllipticHDContext *child_ctx, unsigned int nChild, int private);
 
 // Strip private key
 void elliptic_id_neuter(const EllipticHDContext *ctx, EllipticHDContext *child_ctx);

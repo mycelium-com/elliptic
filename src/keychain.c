@@ -173,7 +173,7 @@ int elliptic_hd_init(EllipticHDContext *ctx, int type, const uint8_t *seed, size
     return 1;
 }
 
-int elliptic_hd_derive(const EllipticHDContext *ctx, EllipticHDContext *child_ctx, unsigned int nChild) {
+int elliptic_hd_derive(const EllipticHDContext *ctx, EllipticHDContext *child_ctx, unsigned int nChild, int private) {
     unsigned int pub_offset;
     unsigned char bip32_hash[64];
     unsigned char child_tmp[33];
@@ -183,6 +183,11 @@ int elliptic_hd_derive(const EllipticHDContext *ctx, EllipticHDContext *child_ct
 
     if ((nChild >> 31) && !ctx->context.HasPrivate) {
         // An attempt of hardened derivation without private key
+        return 0;
+    }
+
+    if (private && !ctx->context.HasPrivate) {
+        // An attempt of private key derivation without private key
         return 0;
     }
 
@@ -214,16 +219,28 @@ int elliptic_hd_derive(const EllipticHDContext *ctx, EllipticHDContext *child_ct
         // Non-hardened
         (*BIP32Hash)(ctx->chaincode, nChild, ctx->context.PublicKey[0], ctx->context.PublicKey + 1, bip32_hash);
 
-        // Generate children public key
-        // A = nB + T
-        memcpy(child_tmp, ctx->context.PublicKey, 33);
-        if (!(*add_scalar)(child_tmp + pub_offset, NULL, bip32_hash)) {
-            // Overflow?
-            return 0;
-        }
+        if (ctx->context.HasPrivate && private) {
+            // Generate children private key
+            //  a = n + t
+            memcpy(child_tmp, ctx->context.PrivateKey, 32);
+            if (!(*add_scalar)(NULL, child_tmp, bip32_hash)) {
+                // Overflow?
+                return 0;
+            }
+            // Init child ECC context
+            elliptic_init(&child_ctx->context, ctx->context.EllipticType, child_tmp, NULL);
+        } else {
+            // Generate children public key
+            // A = nB + T
+            memcpy(child_tmp, ctx->context.PublicKey, 33);
+            if (!(*add_scalar)(child_tmp + pub_offset, NULL, bip32_hash)) {
+                // Overflow?
+                return 0;
+            }
 
-        // Init child ECC context
-        elliptic_init(&child_ctx->context, ctx->context.EllipticType, NULL, child_tmp);
+            // Init child ECC context
+            elliptic_init(&child_ctx->context, ctx->context.EllipticType, NULL, child_tmp);
+        }
 
     } else {
         // Hardened
