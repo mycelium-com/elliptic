@@ -5,9 +5,9 @@
 #include <stddef.h>
 
 // Private contexts
-const int EllipticInvalid = 0;
-const int EllipticED25519 = 1;
-const int EllipticSecp256K1 = 2;
+static const int EllipticInvalid = 0;
+static const int EllipticED25519 = 1;
+static const int EllipticSecp256K1 = 2;
 
 typedef struct EllipticContext {
     int EllipticType;
@@ -16,7 +16,7 @@ typedef struct EllipticContext {
     uint8_t PublicKey[33];
 } EllipticContext;
 
-const unsigned int BIP32_EXTKEY_SIZE = 74;
+static const unsigned int BIP32_EXTKEY_SIZE = 74;
 
 typedef struct EllipticHDContext {
     unsigned char nDepth;
