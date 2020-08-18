@@ -37,8 +37,7 @@ int main() {
         }
         else {
             printf("elliptic_hd_derive failed\n");
-            continue;
-//            return -1;
+            return -1;
         }
     }
 
