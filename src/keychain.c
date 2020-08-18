@@ -173,7 +173,66 @@ int elliptic_hd_init(EllipticHDContext *ctx, int type, const uint8_t *seed, size
     return 1;
 }
 
-int elliptic_hd_derive(const EllipticHDContext *ctx, EllipticHDContext *child_ctx, unsigned int nChild, int priv) {
+static int derive_priv(const EllipticHDContext *ctx, EllipticHDContext *child_ctx, unsigned int nChild) {
+    unsigned char bip32_hash[64];
+    unsigned char child_tmp[32];
+    int (*add_scalar)(unsigned char *public_key, unsigned char *private_key, const unsigned char *scalar);
+    void (*BIP32Fingerprint)(const uint8_t public_key[33], uint8_t fingerprint[4]);
+    void (*BIP32Hash)(const unsigned char chainCode[32], unsigned int nChild, unsigned char header, const unsigned char data[32], unsigned char output[64]);
+
+    if (!ctx->context.HasPrivate) {
+        // An attempt of private key derivation without private key
+        return 0;
+    }
+
+    switch (ctx->context.EllipticType) {
+        case EllipticED25519:
+            add_scalar = &ed25519_add_scalar;
+            BIP32Hash = &BIP32Hash_SHA3;
+            BIP32Fingerprint = &BIP32Fingerprint_ed25519;
+            break;
+        case EllipticSecp256K1:
+            add_scalar = &secp256k1_add_scalar;
+            BIP32Hash = &BIP32Hash_SHA2;
+            BIP32Fingerprint = &BIP32Fingerprint_secp256k1;
+            break;
+        default:
+            return 0;
+    }
+
+    // Next children
+    child_ctx->nChild = ctx->nChild + 1;
+
+    // Get key fingerprint
+    (*BIP32Fingerprint)(ctx->context.PublicKey, child_ctx->vchFingerprint);
+
+    // Derive child key
+    if ((nChild >> 31) == 0) {
+        // Non-hardened
+        (*BIP32Hash)(ctx->chaincode, nChild, ctx->context.PublicKey[0], ctx->context.PublicKey + 1, bip32_hash);
+    } else {
+        // Hardened
+        (*BIP32Hash)(ctx->chaincode, nChild, 0, ctx->context.PrivateKey, bip32_hash);
+    }
+
+    // Generate children private key
+    //  a = n + t
+    memcpy(child_tmp, ctx->context.PrivateKey, 32);
+    if (!(*add_scalar)(NULL, child_tmp, bip32_hash)) {
+        // Overflow?
+        return 0;
+    }
+
+    // Init child ECC context
+    elliptic_init(&child_ctx->context, ctx->context.EllipticType, child_tmp, NULL);
+
+    // Set chain code for child key
+    memcpy(child_ctx->chaincode, bip32_hash+32, 32);
+
+    return 1;
+}
+
+static int derive_pub(const EllipticHDContext *ctx, EllipticHDContext *child_ctx, unsigned int nChild) {
     unsigned int pub_offset;
     unsigned char bip32_hash[64];
     unsigned char child_tmp[33];
@@ -183,11 +242,6 @@ int elliptic_hd_derive(const EllipticHDContext *ctx, EllipticHDContext *child_ct
 
     if ((nChild >> 31) && !ctx->context.HasPrivate) {
         // An attempt of hardened derivation without private key
-        return 0;
-    }
-
-    if (priv && !ctx->context.HasPrivate) {
-        // An attempt of private key derivation without private key
         return 0;
     }
 
@@ -218,50 +272,30 @@ int elliptic_hd_derive(const EllipticHDContext *ctx, EllipticHDContext *child_ct
     if ((nChild >> 31) == 0) {
         // Non-hardened
         (*BIP32Hash)(ctx->chaincode, nChild, ctx->context.PublicKey[0], ctx->context.PublicKey + 1, bip32_hash);
-
-        if (ctx->context.HasPrivate && priv) {
-            // Generate children private key
-            //  a = n + t
-            memcpy(child_tmp, ctx->context.PrivateKey, 32);
-            if (!(*add_scalar)(NULL, child_tmp, bip32_hash)) {
-                // Overflow?
-                return 0;
-            }
-            // Init child ECC context
-            elliptic_init(&child_ctx->context, ctx->context.EllipticType, child_tmp, NULL);
-        } else {
-            // Generate children public key
-            // A = nB + T
-            memcpy(child_tmp, ctx->context.PublicKey, 33);
-            if (!(*add_scalar)(child_tmp + pub_offset, NULL, bip32_hash)) {
-                // Overflow?
-                return 0;
-            }
-
-            // Init child ECC context
-            elliptic_init(&child_ctx->context, ctx->context.EllipticType, NULL, child_tmp);
-        }
-
     } else {
         // Hardened
         (*BIP32Hash)(ctx->chaincode, nChild, 0, ctx->context.PrivateKey, bip32_hash);
-
-        // Generate children private key
-        //  a = n + t
-        memcpy(child_tmp, ctx->context.PrivateKey, 32);
-        if (!(*add_scalar)(NULL, child_tmp, bip32_hash)) {
-            // Overflow?
-            return 0;
-        }
-
-        // Init child ECC context
-        elliptic_init(&child_ctx->context, ctx->context.EllipticType, child_tmp, NULL);
     }
+
+    // Generate children public key
+    // A = nB + T
+    memcpy(child_tmp, ctx->context.PublicKey, 33);
+    if (!(*add_scalar)(child_tmp + pub_offset, NULL, bip32_hash)) {
+        // Overflow?
+        return 0;
+    }
+
+    // Init child ECC context
+    elliptic_init(&child_ctx->context, ctx->context.EllipticType, NULL, child_tmp);
 
     // Set chain code for child key
     memcpy(child_ctx->chaincode, bip32_hash+32, 32);
 
     return 1;
+}
+
+int elliptic_hd_derive(const EllipticHDContext *ctx, EllipticHDContext *child_ctx, unsigned int nChild, int priv) {
+    return priv ? derive_priv(ctx, child_ctx, nChild) : derive_pub(ctx, child_ctx, nChild);
 }
 
 void elliptic_hd_neuter(const EllipticHDContext *ctx, EllipticHDContext *public_ctx) {
