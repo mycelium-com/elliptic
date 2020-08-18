@@ -173,7 +173,7 @@ int elliptic_hd_init(EllipticHDContext *ctx, int type, const uint8_t *seed, size
     return 1;
 }
 
-int elliptic_hd_derive(const EllipticHDContext *ctx, EllipticHDContext *child_ctx, unsigned int nChild, int private) {
+int elliptic_hd_derive(const EllipticHDContext *ctx, EllipticHDContext *child_ctx, unsigned int nChild, int priv) {
     unsigned int pub_offset;
     unsigned char bip32_hash[64];
     unsigned char child_tmp[33];
@@ -186,7 +186,7 @@ int elliptic_hd_derive(const EllipticHDContext *ctx, EllipticHDContext *child_ct
         return 0;
     }
 
-    if (private && !ctx->context.HasPrivate) {
+    if (priv && !ctx->context.HasPrivate) {
         // An attempt of private key derivation without private key
         return 0;
     }
@@ -219,7 +219,7 @@ int elliptic_hd_derive(const EllipticHDContext *ctx, EllipticHDContext *child_ct
         // Non-hardened
         (*BIP32Hash)(ctx->chaincode, nChild, ctx->context.PublicKey[0], ctx->context.PublicKey + 1, bip32_hash);
 
-        if (ctx->context.HasPrivate && private) {
+        if (ctx->context.HasPrivate && priv) {
             // Generate children private key
             //  a = n + t
             memcpy(child_tmp, ctx->context.PrivateKey, 32);
