@@ -26,6 +26,21 @@ set_target_properties(elliptic PROPERTIES
    PUBLIC_HEADER "include/elliptic.h"
 )
 
+add_executable(test_sign_ed25519 misc/test_sign_ed25519.c $<TARGET_OBJECTS:elliptic>)
+add_executable(test_sign_secp256k1 misc/test_sign_secp256k1.c $<TARGET_OBJECTS:elliptic>)
+add_executable(test_hd_ed25519 misc/test_hd_ed25519.c $<TARGET_OBJECTS:elliptic>)
+add_executable(test_hd_secp256k1 misc/test_hd_secp256k1.c $<TARGET_OBJECTS:elliptic>)
+
+target_include_directories(test_sign_ed25519 PRIVATE include)
+target_include_directories(test_sign_secp256k1 PRIVATE include)
+target_include_directories(test_hd_ed25519 PRIVATE include)
+target_include_directories(test_hd_secp256k1 PRIVATE include)
+
+target_link_libraries(test_sign_ed25519 elliptic hashing ed25519 secp256k1)
+target_link_libraries(test_sign_secp256k1 elliptic hashing ed25519 secp256k1)
+target_link_libraries(test_hd_ed25519 elliptic hashing ed25519 secp256k1)
+target_link_libraries(test_hd_secp256k1 elliptic hashing ed25519 secp256k1)
+
 include(GNUInstallDirs)
 install(TARGETS elliptic
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
