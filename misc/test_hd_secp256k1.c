@@ -15,25 +15,35 @@ int main() {
     int i;
     EllipticHDContext ctx;
     EllipticHDContext child;
-    const uint8_t binary_hd[BIP32_EXTKEY_SIZE];
+    uint8_t binary_hd[BIP32_EXTKEY_SIZE] = {0};
 
     if (elliptic_hd_init(&ctx, EllipticSecp256K1, seed, sizeof(seed))) {
         elliptic_hd_export_priv(&ctx, binary_hd);
-        printf("Binary xpriv (0): ");
-        print(binary_hd, sizeof(binary_hd));
+        printf("Binary xpriv (root): ");
+        print(&binary_hd[0], sizeof(binary_hd));
+        memset(&binary_hd[0], 0, BIP32_EXTKEY_SIZE);
+        printf("\n");
+
         elliptic_hd_export_pub(&ctx, binary_hd);
-        printf("Binary xpub: (0): ");
-        print(binary_hd, sizeof(binary_hd));
+        printf("Binary xpub: (root): ");
+        print(&binary_hd[0], sizeof(binary_hd));
+        memset(&binary_hd[0], 0, BIP32_EXTKEY_SIZE);
+        printf("\n");
     }
 
     for(i = 0; i < 10; ++i) {
         if (elliptic_hd_derive(&ctx, &child, i, 1)) {
-            elliptic_hd_export_priv(&ctx, binary_hd);
+            elliptic_hd_export_priv(&child, binary_hd);
             printf("Binary xpriv (0/%d): ", i);
-            print(binary_hd, sizeof(binary_hd));
-            elliptic_hd_export_pub(&ctx, binary_hd);
+            print(&binary_hd[0], sizeof(binary_hd));
+            memset(&binary_hd[0], 0, BIP32_EXTKEY_SIZE);
+            printf("\n");
+
+            elliptic_hd_export_pub(&child, binary_hd);
             printf("Binary xpub (0/%d): ", i);
-            print(binary_hd, sizeof(binary_hd));
+            print(&binary_hd[0], sizeof(binary_hd));
+            memset(&binary_hd[0], 0, BIP32_EXTKEY_SIZE);
+            printf("\n");
         }
         else {
             printf("elliptic_hd_derive failed\n");
