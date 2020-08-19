@@ -16,6 +16,7 @@ int main() {
     unsigned int i;
     EllipticHDContext ctx;
     EllipticHDContext child;
+    EllipticHDContext root_pub;
     uint8_t binary_hd[BIP32_EXTKEY_SIZE] = {0};
 
     if (elliptic_hd_init(&ctx, EllipticED25519, seed, sizeof(seed))) {
@@ -30,9 +31,13 @@ int main() {
         print(&binary_hd[0], sizeof(binary_hd));
         memset(&binary_hd[0], 0, BIP32_EXTKEY_SIZE);
         printf("\n");
+
+        elliptic_hd_neuter(&ctx, &root_pub);
     }
 
-    for(i = 0; i < 10; ++i) {
+    printf("Private key derivation:\n");
+
+    for(i = 0; i < 5; ++i) {
         if (elliptic_hd_derive(&ctx, &child, i, 1)) {
             elliptic_hd_export_priv(&child, binary_hd);
             printf("Binary xpriv (0/%d): ", i);
@@ -52,4 +57,20 @@ int main() {
         }
     }
 
+    printf("Public key derivation:\n");
+
+    for(i = 0; i < 5; ++i) {
+        if (elliptic_hd_derive(&root_pub, &child, i, 0)) {
+
+            elliptic_hd_export_pub(&child, binary_hd);
+            printf("Binary xpub (0/%d): ", i);
+            print(&binary_hd[0], sizeof(binary_hd));
+            memset(&binary_hd[0], 0, BIP32_EXTKEY_SIZE);
+            printf("\n");
+        }
+        else {
+            printf("elliptic_hd_derive failed\n");
+            return -1;
+        }
+    }
 }
