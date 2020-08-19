@@ -1,6 +1,7 @@
 #include "elliptic.h"
 
 #include <stdio.h>
+#include <string.h>
 
 void print(const uint8_t *data, int length) {
     for (int i = 0; i < length; ++i) {
