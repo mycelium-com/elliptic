@@ -51,7 +51,7 @@ int elliptic_hd_init(EllipticHDContext *ctx, int type, const uint8_t *seed, size
 int elliptic_hd_derive(const EllipticHDContext *ctx, EllipticHDContext *child_ctx, unsigned int nChild, int priv);
 
 // Strip private key
-void elliptic_id_neuter(const EllipticHDContext *ctx, EllipticHDContext *child_ctx);
+void elliptic_hd_neuter(const EllipticHDContext *ctx, EllipticHDContext *child_ctx);
 
 #ifdef __cplusplus
 }
