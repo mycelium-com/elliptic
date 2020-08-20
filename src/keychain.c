@@ -247,6 +247,9 @@ static int derive_pub(const EllipticHDContext *ctx, EllipticHDContext *child_ctx
 
     switch (ctx->context.EllipticType) {
         case EllipticED25519:
+            // Not yet supported
+            return 0;
+
             pub_offset = 1;
             add_scalar = &ed25519_add_scalar;
             BIP32Hash = &BIP32Hash_SHA3;
