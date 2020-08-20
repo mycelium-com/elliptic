@@ -11,11 +11,13 @@ set(elliptic_src
    src/keypair.c
    src/verify.c
    src/keychain.c
+   src/bip32/secp256k1-hd.c
 )
 
 add_library(elliptic ${elliptic_src})
 
 target_include_directories(elliptic PRIVATE include)
+target_include_directories(elliptic PRIVATE src/bip32)
 target_include_directories(elliptic PRIVATE extras/hashing/include)
 target_include_directories(elliptic PRIVATE extras/ed25519/include)
 target_include_directories(elliptic PRIVATE extras/secp256k1/include)
