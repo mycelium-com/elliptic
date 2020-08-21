@@ -21,17 +21,6 @@ static void multiply(uint8_t *dst, const uint8_t *src, int bytes){
 	dst[bytes] = src[bytes-1] >> 5;
 }
 
-static void add_256bits(uint8_t *dst, const uint8_t *src1, const uint8_t *src2){
-	int i; uint8_t carry = 0;
-	for (i = 0; i < 32; i++) {
-		uint8_t a = src1[i];
-		uint8_t b = src2[i];
-		uint16_t r = (uint16_t) a + (uint16_t) b + (uint16_t) carry;
-		dst[i] = r & 0xff;
-		carry = (r >= 0x100) ? 1 : 0;
-	}
-}
-
 static void scalar_add(const uint8_t *src1, const uint8_t *src2, uint8_t *res){
     uint16_t r = 0; int i;
     for (i = 0; i < 32; i++) {
