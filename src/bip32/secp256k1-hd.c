@@ -9,7 +9,7 @@
 static void BIP32Fingerprint(const uint8_t *public_key, uint8_t *public_key_id) {
      unsigned char tmp_hash[SHA256_DIGEST_SIZE]; 
 
-    // First 4 bytes of RIPEMD160(SHA3-256(public key))
+    // First 4 bytes of RIPEMD160(SHA256(public key))
     sha256(public_key, 33, tmp_hash);
     ripemd160(tmp_hash, sizeof(tmp_hash), public_key_id); 
 }
