@@ -95,9 +95,6 @@ int ed25519_init_seed(const uint8_t *seed, int seed_len, uint8_t *private_key, u
 
 int ed25519_derive_priv(const uint8_t *chainCode, const uint8_t *public_key, const uint8_t *private_key, uint8_t *child_fingerprint, uint8_t *childCode, uint8_t *child_private_key, unsigned int nChild) {
     uint8_t tmp[64];
-    uint8_t zL[32] = {0};
-    uint8_t zl8[32] = {0};
-	uint8_t res_key[32] = {0};
 
     // Derive intermediate values
     if ((nChild >> 31) == 0) {
@@ -112,13 +109,17 @@ int ed25519_derive_priv(const uint8_t *chainCode, const uint8_t *public_key, con
     // Copy chain code
     memcpy(childCode, tmp + 32, 32);
 
-    // Init zL
-    memcpy(zL, tmp, 28);
+    // Init Z
+    //  Copy first part of hash in place of
+    //  second one and then erase last 4 bytes
+    memcpy(tmp + 32, tmp, 28);
+    memset(tmp + 60, 0, 4);
 
-    /* child = 8*Zl + parent */
-    multiply(zl8, zL, 32);
-    scalar_add(zl8, private_key, res_key);
-    memcpy(child_private_key, res_key, 32);
+    // 8*Z is placed in first 32 bytes
+    multiply(tmp, tmp + 32, 32);
+
+    // child = 8*Z + parent
+    scalar_add(tmp, private_key, child_private_key);
 
     // Create child fingerprint
     BIP32Fingerprint(public_key, child_fingerprint);
@@ -128,10 +129,6 @@ int ed25519_derive_priv(const uint8_t *chainCode, const uint8_t *public_key, con
 
 int ed25519_derive_pub(const uint8_t *chainCode, const uint8_t *public_key, uint8_t *child_fingerprint, uint8_t *childCode, uint8_t *child_public_key, unsigned int nChild) {
     uint8_t tmp[64];
-
-    uint8_t zL[32] = {0};
-    uint8_t zR[32] = {0};
-    uint8_t zl8[32] = {0};
 
     if (nChild >> 31) {
         // An attempt of hardened derivation
@@ -144,12 +141,17 @@ int ed25519_derive_pub(const uint8_t *chainCode, const uint8_t *public_key, uint
     // Copy chain code
     memcpy(childCode, tmp + 32, 32);
 
-    // Init zL
-    memcpy(zL, tmp, 28);
+    // Init Z
+    //  Copy first part of hash in place of
+    //  second one and then erase last 4 bytes
+    memcpy(tmp + 32, tmp, 28);
+    memset(tmp + 60, 0, 4);
 
-    /* Child = Parent + 8*Zl */
-    multiply(zl8, zL, 32);
-    ge_point_add(public_key, zl8, child_public_key);
+    // 8*Z is placed in first 32 bytes
+    multiply(tmp, tmp + 32, 32);
+
+    // Child = Parent + 8*Z
+    ge_point_add(public_key, tmp, child_public_key);
 
     // Create child fingerprint
     BIP32Fingerprint(public_key, child_fingerprint);
