@@ -12,6 +12,7 @@ set(elliptic_src
    src/verify.c
    src/keychain.c
    src/bip32/secp256k1-hd.c
+   src/bip32/ed25519-hd.c
 )
 
 add_library(elliptic ${elliptic_src})
