@@ -109,7 +109,6 @@ int ed25519_derive_priv(const uint8_t *chainCode, const uint8_t *public_key, con
     uint8_t zL[32] = {0};
     uint8_t zl8[32] = {0};
 	uint8_t res_key[32] = {0};
-    uint8_t pub_key[32] = {0};
 
     // Derive intermediate values
     if ((nChild >> 31) == 0) {
@@ -121,6 +120,9 @@ int ed25519_derive_priv(const uint8_t *chainCode, const uint8_t *public_key, con
         BIP32Hash(chainCode, nChild, 0, private_key, tmp);
     }
 
+    // Copy chain code
+    memcpy(childCode, tmp + 32, 32);
+
     // Init zL
     memcpy(zL, tmp, 28);
 
@@ -129,12 +131,8 @@ int ed25519_derive_priv(const uint8_t *chainCode, const uint8_t *public_key, con
     scalar_add(zl8, private_key, res_key);
     memcpy(child_private_key, res_key, 32);
 
-    // Copy chain code
-    memcpy(childCode, tmp + 32, 32);
-
     // Create child fingerprint
-    ed25519_get_pubkey(pub_key, child_private_key);
-    BIP32Fingerprint(pub_key, child_fingerprint);
+    BIP32Fingerprint(public_key, child_fingerprint);
 
     return 1;
 }
@@ -154,6 +152,9 @@ int ed25519_derive_pub(const uint8_t *chainCode, const uint8_t *public_key, uint
     // Derive intermediate values
     BIP32Hash(chainCode, nChild, 2, public_key, tmp);
 
+    // Copy chain code
+    memcpy(childCode, tmp + 32, 32);
+
     // Init zL
     memcpy(zL, tmp, 28);
 
@@ -161,11 +162,8 @@ int ed25519_derive_pub(const uint8_t *chainCode, const uint8_t *public_key, uint
     multiply(zl8, zL, 32);
     ge_point_add(public_key, zl8, child_public_key);
 
-    // Copy chain code
-    memcpy(childCode, tmp + 32, 32);
-
     // Create child fingerprint
-    BIP32Fingerprint(child_public_key, child_fingerprint);
+    BIP32Fingerprint(public_key, child_fingerprint);
 
     return 1;
 }

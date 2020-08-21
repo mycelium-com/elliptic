@@ -8,6 +8,7 @@
 #include "ripemd160.h"
 
 #include "secp256k1-hd.h"
+#include "ed25519-hd.h"
 
 int elliptic_hd_import_pub(EllipticHDContext *ctx, int type, const uint8_t binary[BIP32_EXTKEY_SIZE]) {
     ctx->nDepth = binary[0];
@@ -86,6 +87,11 @@ int elliptic_hd_init(EllipticHDContext *ctx, int type, const uint8_t *seed, size
         case EllipticSecp256K1:
             secp256k1_init_seed(seed, seed_len, private_key, ctx->chaincode);
             break;
+        case EllipticED25519:
+            if (!ed25519_init_seed(seed, seed_len, private_key, ctx->chaincode)) {
+                return 0;
+            }
+            break;
         default:
             return 0;
     }
@@ -111,6 +117,11 @@ static int derive_priv(const EllipticHDContext *ctx, EllipticHDContext *child_ct
     switch (ctx->context.EllipticType) {
         case EllipticSecp256K1:
             if (!secp256k1_derive_priv(ctx->chaincode, ctx->context.PublicKey, ctx->context.PrivateKey, child_ctx->vchFingerprint, child_ctx->chaincode, child_tmp, nChild)) {
+                return 0;
+            }
+            break;
+        case EllipticED25519:
+            if (!ed25519_derive_priv(ctx->chaincode, ctx->context.PublicKey + 1, ctx->context.PrivateKey, child_ctx->vchFingerprint, child_ctx->chaincode, child_tmp, nChild)) {
                 return 0;
             }
             break;
@@ -152,6 +163,26 @@ static int derive_pub(const EllipticHDContext *ctx, EllipticHDContext *child_ctx
             else {
                 // If we don't have private key then use public key
                 if (!secp256k1_derive_pub(ctx->chaincode, ctx->context.PublicKey, child_ctx->vchFingerprint, child_ctx->chaincode, child_tmp, nChild)) {
+                    return 0;
+                }
+            }
+
+            break;
+        case EllipticED25519:
+            if (has_priv) {
+                // If we have private key then we don't need to perform excessive point operations
+                if (!ed25519_derive_priv(ctx->chaincode, ctx->context.PublicKey + 1, ctx->context.PrivateKey, child_ctx->vchFingerprint, child_ctx->chaincode, child_tmp, nChild)) {
+                    return 0;
+                }
+
+                // Compute public key
+                child_tmp[0] = 0x03;
+                ed25519_get_pubkey(child_tmp, child_tmp + 1);
+            }
+            else {
+                // If we don't have private key then use public key
+                child_tmp[0] = 0x03;
+                if (!ed25519_derive_pub(ctx->chaincode, ctx->context.PublicKey + 1, child_ctx->vchFingerprint, child_ctx->chaincode, child_tmp + 1, nChild)) {
                     return 0;
                 }
             }
