@@ -51,7 +51,7 @@ static void BIP32Fingerprint(const uint8_t *public_key, uint8_t *public_key_id) 
 }
 
 // ed25519 key hashing
-static void BIP32Hash(const unsigned char chainCode[32], unsigned int nChild, unsigned char header, const uint8_t *data1, int data1_length, const uint8_t *data2, int data2_length, unsigned char output[64])
+static void BIP32Hash(const unsigned char chainCode[32], unsigned int nChild, unsigned char header, const uint8_t *data, unsigned char output[64])
 {
     unsigned char num[4];
     hmac_sha3_512_ctx hmac_ctx;
@@ -64,17 +64,12 @@ static void BIP32Hash(const unsigned char chainCode[32], unsigned int nChild, un
     // Calculate hmac for data and num using chain code as hash key
     hmac_sha3_512_init(&hmac_ctx, chainCode, 32);
     hmac_sha3_512_update(&hmac_ctx, &header, 1);
-    if (data1 != NULL) {
-        hmac_sha3_512_update(&hmac_ctx, data1, data1_length);
-    }
-    if (data2 != NULL) {
-        hmac_sha3_512_update(&hmac_ctx, data2, data2_length);
-    }
+    hmac_sha3_512_update(&hmac_ctx, data, 32);
     hmac_sha3_512_update(&hmac_ctx, num, sizeof(num));
     hmac_sha3_512_final(&hmac_ctx, output, 64);
 }
 
-int ed25519_init_seed(const uint8_t *seed, int seed_len, uint8_t *private_key, uint8_t *chaincode, uint8_t *kL, uint8_t *kR) {
+int ed25519_init_seed(const uint8_t *seed, int seed_len, uint8_t *private_key, uint8_t *chaincode) {
     const unsigned char hashkey_ed25519[] = {'E','D','2','5','5','1','9',' ','s','e','e','d'};
     hmac_sha3_512_ctx hmac_ctx_ed25519;
 
@@ -95,76 +90,53 @@ int ed25519_init_seed(const uint8_t *seed, int seed_len, uint8_t *private_key, u
     tmp[31] &= 63;
     tmp[31] |= 64;
 
-    // Export left and right parts
-    memcpy(kL, tmp, 32);
-    memcpy(kR, tmp + 32, 32);
+    // Copy private key
+    memcpy(private_key, tmp, 32);
     
-    // Make chain code
-    hmac_sha3_512_init(&hmac_ctx_ed25519, hashkey_ed25519, sizeof(hashkey_ed25519));
-    hmac_sha3_512_update(&hmac_ctx_ed25519, kL, sizeof(kL));
-    hmac_sha3_512_update(&hmac_ctx_ed25519, kR, sizeof(kR));
-    hmac_sha3_512_final(&hmac_ctx_ed25519, tmp, sizeof(tmp));
-    memcpy(chaincode, tmp, 32);
+    // Copy chain code
+    memcpy(chaincode, tmp + 32, 32);
 
     return 1;
 }
 
-int ed25519_derive_private(const uint8_t *chainCode, unsigned int nChild, const uint8_t *public_key, const uint8_t *kL, const uint8_t *kR, uint8_t *child_kL, uint8_t *child_kR, uint8_t *childCode) {
+int ed25519_derive_private(const uint8_t *chainCode, unsigned int nChild, const uint8_t *public_key, const uint8_t *private_key, uint8_t *child_private_key, uint8_t *childCode) {
     uint8_t tmp[64];
-
     uint8_t zL[32] = {0};
-    uint8_t zR[32] = {0};
-
     uint8_t zl8[32] = {0};
 	uint8_t res_key[32] = {0};
 
     // Derive intermediate values
     if ((nChild >> 31) == 0) {
         // Non-hardened
-        BIP32Hash(chainCode, nChild, 2, public_key, 32, NULL, 0, tmp);
+        BIP32Hash(chainCode, nChild, 2, public_key, tmp);
     }
     else {
         // Hardened
-        BIP32Hash(chainCode, nChild, 0, kL, 32, kR, 32, tmp);
+        BIP32Hash(chainCode, nChild, 0, private_key, tmp);
     }
 
-    // Init zL and zR
+    // Init zL
     memcpy(zL, tmp, 28);
-    memcpy(zR, tmp + 32, 32);
 
-    /* Kl = 8*Zl + parent(kL) */
+    /* child = 8*Zl + parent */
     multiply(zl8, zL, 32);
-    scalar_add(zl8, kL, res_key);
-    memcpy(child_kL, res_key, 32);
+    scalar_add(zl8, private_key, res_key);
+    memcpy(child_private_key, res_key, 32);
 
-	/* Kr = Zr + parent(K)r */
-    memset(res_key, 0, 32);
-    add_256bits(res_key, zR, kR);
-    memcpy(child_kR, res_key, 32);
-
-    // Generate chain code
-    if ((nChild >> 31) == 0) {
-        // Non-hardened
-        BIP32Hash(chainCode, nChild, 3, public_key, 32, NULL, 0, tmp);
-    }
-    else {
-        // Hardened
-        BIP32Hash(chainCode, nChild, 1, kL, 32, kR, 32, tmp);
-    }
-
-    memcpy(childCode, tmp, 32);
+    // Copy chain code
+    memcpy(childCode, tmp + 32, 32);
 
     return 1;
 }
 
-int ed25519_derive_public(const uint8_t *chainCode, unsigned int nChild, const uint8_t *public_key, const uint8_t *kL, const uint8_t *kR, uint8_t *child_public_key, uint8_t *childCode) {
+int ed25519_derive_public(const uint8_t *chainCode, unsigned int nChild, const uint8_t *public_key, const uint8_t *private_key, uint8_t *child_public_key, uint8_t *childCode) {
     uint8_t tmp[64];
 
     uint8_t zL[32] = {0};
     uint8_t zR[32] = {0};
     uint8_t zl8[32] = {0};
 
-    if ((nChild >> 31) && (kL == NULL || kR == NULL)) {
+    if ((nChild >> 31) && (private_key == NULL)) {
         // An attempt of hardened derivation without providing the private key data
         return 0;
     }
@@ -172,32 +144,22 @@ int ed25519_derive_public(const uint8_t *chainCode, unsigned int nChild, const u
     // Derive intermediate values
     if ((nChild >> 31) == 0) {
         // Non-hardened
-        BIP32Hash(chainCode, nChild, 2, public_key, 32, NULL, 0, tmp);
+        BIP32Hash(chainCode, nChild, 2, public_key, tmp);
     }
     else {
         // Hardened
-        BIP32Hash(chainCode, nChild, 0, kL, 32, kR, 32, tmp);
+        BIP32Hash(chainCode, nChild, 0, private_key, tmp);
     }
 
-    // Init zL and zR
+    // Init zL
     memcpy(zL, tmp, 28);
-    memcpy(zR, tmp + 32, 32);
 
     /* Child = Parent + 8*Zl */
     multiply(zl8, zL, 32);
     ge_point_add(public_key, zl8, child_public_key);
 
-    // Generate chain code
-    if ((nChild >> 31) == 0) {
-        // Non-hardened
-        BIP32Hash(chainCode, nChild, 3, public_key, 32, NULL, 0, tmp);
-    }
-    else {
-        // Hardened
-        BIP32Hash(chainCode, nChild, 1, kL, 32, kR, 32, tmp);
-    }
-
-    memcpy(childCode, tmp, 32);
+    // Copy chain code
+    memcpy(childCode, tmp + 32, 32);
 
     return 1;
 }
