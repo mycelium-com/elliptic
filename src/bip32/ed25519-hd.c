@@ -43,11 +43,16 @@ static void scalar_add(const uint8_t *src1, const uint8_t *src2, uint8_t *res){
 
 // ed25519 key fingerprint
 static void BIP32Fingerprint(const uint8_t *public_key, uint8_t *public_key_id) {
-     unsigned char tmp_hash[SHA3_256_DIGEST_LENGTH]; 
+    unsigned char tmp_hash[SHA3_256_DIGEST_LENGTH];
+    const uint8_t prefix = 0x03;
+    SHA3_CTX sha3_ctx;
 
     // First 4 bytes of RIPEMD160(SHA3-256(0x03 + public key))
-    sha3_256(public_key, 33, tmp_hash);
-    ripemd160(tmp_hash, sizeof(tmp_hash), public_key_id); 
+    sha3_256_Init(&sha3_ctx);
+    sha3_Update(&sha3_ctx, &prefix, 1);
+    sha3_Update(&sha3_ctx, public_key, 32);
+    sha3_Final(&sha3_ctx, tmp_hash);
+    ripemd160(tmp_hash, sizeof(tmp_hash), public_key_id);
 }
 
 // ed25519 key hashing
@@ -99,11 +104,12 @@ int ed25519_init_seed(const uint8_t *seed, int seed_len, uint8_t *private_key, u
     return 1;
 }
 
-int ed25519_derive_priv(const uint8_t *chainCode, unsigned int nChild, const uint8_t *public_key, const uint8_t *private_key, uint8_t *child_private_key, uint8_t *childCode) {
+int ed25519_derive_priv(const uint8_t *chainCode, unsigned int nChild, const uint8_t *public_key, const uint8_t *private_key, uint8_t *child_fingerprint, uint8_t *child_private_key, uint8_t *childCode) {
     uint8_t tmp[64];
     uint8_t zL[32] = {0};
     uint8_t zl8[32] = {0};
 	uint8_t res_key[32] = {0};
+    uint8_t pub_key[32] = {0};
 
     // Derive intermediate values
     if ((nChild >> 31) == 0) {
@@ -126,10 +132,14 @@ int ed25519_derive_priv(const uint8_t *chainCode, unsigned int nChild, const uin
     // Copy chain code
     memcpy(childCode, tmp + 32, 32);
 
+    // Create child fingerprint
+    ed25519_get_pubkey(pub_key, child_private_key);
+    BIP32Fingerprint(pub_key, child_fingerprint);
+
     return 1;
 }
 
-int ed25519_derive_pub(const uint8_t *chainCode, unsigned int nChild, const uint8_t *public_key, const uint8_t *private_key, uint8_t *child_public_key, uint8_t *childCode) {
+int ed25519_derive_pub(const uint8_t *chainCode, unsigned int nChild, const uint8_t *public_key, const uint8_t *private_key, uint8_t *child_fingerprint, uint8_t *child_public_key, uint8_t *childCode) {
     uint8_t tmp[64];
 
     uint8_t zL[32] = {0};
@@ -160,6 +170,9 @@ int ed25519_derive_pub(const uint8_t *chainCode, unsigned int nChild, const uint
 
     // Copy chain code
     memcpy(childCode, tmp + 32, 32);
+
+    // Create child fingerprint
+    BIP32Fingerprint(child_public_key, child_fingerprint);
 
     return 1;
 }
