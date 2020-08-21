@@ -104,7 +104,7 @@ int ed25519_init_seed(const uint8_t *seed, int seed_len, uint8_t *private_key, u
     return 1;
 }
 
-int ed25519_derive_priv(const uint8_t *chainCode, unsigned int nChild, const uint8_t *public_key, const uint8_t *private_key, uint8_t *child_fingerprint, uint8_t *child_private_key, uint8_t *childCode) {
+int ed25519_derive_priv(const uint8_t *chainCode, const uint8_t *public_key, const uint8_t *private_key, uint8_t *child_fingerprint, uint8_t *childCode, uint8_t *child_private_key, unsigned int nChild) {
     uint8_t tmp[64];
     uint8_t zL[32] = {0};
     uint8_t zl8[32] = {0};
@@ -139,27 +139,20 @@ int ed25519_derive_priv(const uint8_t *chainCode, unsigned int nChild, const uin
     return 1;
 }
 
-int ed25519_derive_pub(const uint8_t *chainCode, unsigned int nChild, const uint8_t *public_key, const uint8_t *private_key, uint8_t *child_fingerprint, uint8_t *child_public_key, uint8_t *childCode) {
+int ed25519_derive_pub(const uint8_t *chainCode, const uint8_t *public_key, uint8_t *child_fingerprint, uint8_t *childCode, uint8_t *child_public_key, unsigned int nChild) {
     uint8_t tmp[64];
 
     uint8_t zL[32] = {0};
     uint8_t zR[32] = {0};
     uint8_t zl8[32] = {0};
 
-    if ((nChild >> 31) && (private_key == NULL)) {
-        // An attempt of hardened derivation without providing the private key data
+    if (nChild >> 31) {
+        // An attempt of hardened derivation
         return 0;
     }
 
     // Derive intermediate values
-    if ((nChild >> 31) == 0) {
-        // Non-hardened
-        BIP32Hash(chainCode, nChild, 2, public_key, tmp);
-    }
-    else {
-        // Hardened
-        BIP32Hash(chainCode, nChild, 0, private_key, tmp);
-    }
+    BIP32Hash(chainCode, nChild, 2, public_key, tmp);
 
     // Init zL
     memcpy(zL, tmp, 28);
