@@ -1,6 +1,5 @@
 #include <string.h>
 
-#include "elliptic.h"
 #include "secp256k1.h"
 
 #include "hmac_sha2.h"
@@ -10,7 +9,7 @@
 static void BIP32Fingerprint(const uint8_t *public_key, uint8_t *public_key_id) {
      unsigned char tmp_hash[SHA256_DIGEST_SIZE]; 
 
-    // First 4 bytes of RIPEMD160(SHA3-256(0x03 + ed25519 public key))
+    // First 4 bytes of RIPEMD160(SHA3-256(public key))
     sha256(public_key, 33, tmp_hash);
     ripemd160(tmp_hash, sizeof(tmp_hash), public_key_id); 
 }
