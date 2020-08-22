@@ -177,7 +177,7 @@ static int derive_pub(const EllipticHDContext *ctx, EllipticHDContext *child_ctx
 
                 // Compute public key
                 child_tmp[0] = 0x03;
-                ed25519_get_pubkey(child_tmp, child_tmp + 1);
+                ed25519_get_pubkey(child_tmp + 1, child_tmp + 1);
             }
             else {
                 // If we don't have private key then use public key
