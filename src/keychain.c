@@ -111,9 +111,6 @@ static int derive_priv(const EllipticHDContext *ctx, EllipticHDContext *child_ct
 
     unsigned char child_tmp[32];
 
-    // Next children
-    child_ctx->nChild = ctx->nChild + 1;
-
     switch (ctx->context.EllipticType) {
         case EllipticSecp256K1:
             if (!secp256k1_derive_priv(ctx->chaincode, ctx->context.PublicKey, ctx->context.PrivateKey, child_ctx->vchFingerprint, child_ctx->chaincode, child_tmp, nChild)) {
@@ -128,6 +125,10 @@ static int derive_priv(const EllipticHDContext *ctx, EllipticHDContext *child_ct
         default:
             return 0;
     }
+
+    // Next children
+    child_ctx->nChild = nChild;
+    child_ctx->nDepth = ctx->nDepth + 1;
 
     // Init child ECC context
     elliptic_init(&child_ctx->context, ctx->context.EllipticType, child_tmp, NULL);
@@ -145,9 +146,6 @@ static int derive_pub(const EllipticHDContext *ctx, EllipticHDContext *child_ctx
         // An attempt of hardened derivation without private key
         return 0;
     }
-
-    // Next children
-    child_ctx->nChild = ctx->nChild + 1;
 
     switch (ctx->context.EllipticType) {
         case EllipticSecp256K1:
@@ -191,6 +189,10 @@ static int derive_pub(const EllipticHDContext *ctx, EllipticHDContext *child_ctx
         default:
             return 0;
     }
+
+    // Next children
+    child_ctx->nChild = nChild;
+    child_ctx->nDepth = ctx->nDepth + 1;
 
     // Init child ECC context
     elliptic_init(&child_ctx->context, ctx->context.EllipticType, NULL, child_tmp);
