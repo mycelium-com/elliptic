@@ -40,10 +40,8 @@ int elliptic_hd_export_pub(const EllipticHDContext *ctx, uint8_t binary[BIP32_EX
         binary[7] = (ctx->nChild >>  8) & 0xFF; binary[8] = (ctx->nChild >>  0) & 0xFF;
         // Copy chain code
         memcpy(binary+9, ctx->chaincode, 32);
-        // Public key prefix is always 0x03
-        binary[41] = 0x03;
         // Copy public key
-        memcpy(binary+42, ctx->context.PublicKey, 33);
+        memcpy(binary+41, ctx->context.PublicKey, 33);
 
         return 1;
     }
