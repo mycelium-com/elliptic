@@ -11,7 +11,8 @@ static void BIP32Fingerprint(const uint8_t *public_key, uint8_t *public_key_id) 
 
     // First 4 bytes of RIPEMD160(SHA256(public key))
     sha256(public_key, 33, tmp_hash);
-    ripemd160(tmp_hash, sizeof(tmp_hash), public_key_id); 
+    ripemd160(tmp_hash, sizeof(tmp_hash), tmp_hash);
+    memcpy(public_key_id, tmp_hash, 4);
 }
 
 // secp256k1 key hashing

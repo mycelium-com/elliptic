@@ -41,7 +41,8 @@ static void BIP32Fingerprint(const uint8_t *public_key, uint8_t *public_key_id) 
     sha3_Update(&sha3_ctx, &prefix, 1);
     sha3_Update(&sha3_ctx, public_key, 32);
     sha3_Final(&sha3_ctx, tmp_hash);
-    ripemd160(tmp_hash, sizeof(tmp_hash), public_key_id);
+    ripemd160(tmp_hash, sizeof(tmp_hash), tmp_hash);
+    memcpy(public_key_id, tmp_hash, 4);
 }
 
 // ed25519 key hashing
