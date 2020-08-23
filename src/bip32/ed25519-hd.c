@@ -2,32 +2,12 @@
 
 #include "elliptic.h"
 #include "ed25519.h"
-#include "ge.h"
 
 #include "hmac_sha3.h"
 #include "ripemd160.h"
 
 inline static int read(x,y) {
     return ((0u == (x & (1<<y)))?0u:1u);
-}
-
-static void multiply(uint8_t *dst, const uint8_t *src, int bytes){
-	int i;
-	uint8_t prev_acc = 0;
-	for (i = 0; i < bytes; i++) {
-		dst[i] = (src[i] << 3) + (prev_acc & 0x7);
-		prev_acc = src[i] >> 5;
-	}
-	dst[bytes] = src[bytes-1] >> 5;
-}
-
-static void scalar_add(const uint8_t *src1, const uint8_t *src2, uint8_t *res){
-    uint16_t r = 0; int i;
-    for (i = 0; i < 32; i++) {
-	    r = (uint16_t) src1[i] + (uint16_t) src2[i] + r;
-	    res[i] = (uint8_t) r;
-	    r >>= 8;
-    }
 }
 
 // ed25519 key fingerprint
@@ -110,17 +90,9 @@ int ed25519_derive_priv(const uint8_t *chainCode, const uint8_t *public_key, con
     // Copy chain code
     memcpy(childCode, tmp + 32, 32);
 
-    // Init Z
-    //  Copy first part of hash in place of
-    //  second one and then erase last 4 bytes
-    memcpy(tmp + 32, tmp, 28);
-    memset(tmp + 60, 0, 4);
-
-    // 8*Z is placed in first 32 bytes
-    multiply(tmp, tmp + 32, 32);
-
-    // child = 8*Z + parent
-    scalar_add(tmp, private_key, child_private_key);
+    // Copy private key and tweak it
+    memcpy(child_private_key, private_key, 32);
+    ed25519_add_scalar(NULL, child_private_key, tmp);
 
     // Create child fingerprint
     BIP32Fingerprint(public_key, child_fingerprint);
@@ -142,17 +114,9 @@ int ed25519_derive_pub(const uint8_t *chainCode, const uint8_t *public_key, uint
     // Copy chain code
     memcpy(childCode, tmp + 32, 32);
 
-    // Init Z
-    //  Copy first part of hash in place of
-    //  second one and then erase last 4 bytes
-    memcpy(tmp + 32, tmp, 28);
-    memset(tmp + 60, 0, 4);
-
-    // 8*Z is placed in first 32 bytes
-    multiply(tmp, tmp + 32, 32);
-
-    // Child = Parent + 8*Z
-    ge_point_add(public_key, tmp, child_public_key);
+    // Copy public key and tweak it
+    memcpy(child_public_key, public_key, 32);
+    ed25519_add_scalar(child_public_key, NULL, tmp);
 
     // Create child fingerprint
     BIP32Fingerprint(public_key, child_fingerprint);
