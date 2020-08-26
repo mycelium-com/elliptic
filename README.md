@@ -56,6 +56,12 @@ typedef struct EllipticContext {
 ```c
 /*
  * Initialize ECC context with either private or the public key.
+ *
+ *  Notes:
+ *   You must specify either EllipticED25519 or EllipticSecp256K1 for the underlying curve type.
+ *   If the private key is provided then you don't need to provide a public key.
+ *   Underlying secp256k1 implementation is only supporting a compressed public key representation.
+ *   ED25519 public keys must be always prefixed with 0x03 byte.
  */
 int elliptic_init(EllipticContext *ctx, int type, const uint8_t *key, const uint8_t *public_key);
 ```
@@ -139,6 +145,7 @@ int elliptic_hd_export_priv(const EllipticHDContext *ctx, uint8_t binary[BIP32_E
 ```c
 /*
  * Initialization of new HD key derivation context with given seed data.
+ * You must specify either EllipticED25519 or EllipticSecp256K1 for underlying curve type.
  */
 int elliptic_hd_init(EllipticHDContext *ctx, int type, const uint8_t *seed, size_t seed_len);
 ```
