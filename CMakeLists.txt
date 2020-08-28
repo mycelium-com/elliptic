@@ -22,6 +22,7 @@ set(elliptic_src
 )
 
 add_library(elliptic ${elliptic_src})
+target_link_libraries(elliptic hashing ed25519 secp256k1)
 
 target_include_directories(elliptic PRIVATE include)
 target_include_directories(elliptic PRIVATE src/bip32)
@@ -53,14 +54,14 @@ target_include_directories(test_sign_secp256k1 PRIVATE include)
 target_include_directories(test_hd_ed25519 PRIVATE include)
 target_include_directories(test_hd_secp256k1 PRIVATE include)
 
-target_link_libraries(bench_hd_ed25519 elliptic hashing ed25519 secp256k1)
-target_link_libraries(bench_hd_secp256k1 elliptic hashing ed25519 secp256k1)
-target_link_libraries(bench_sign_ed25519 elliptic hashing ed25519 secp256k1)
-target_link_libraries(bench_sign_secp256k1 elliptic hashing ed25519 secp256k1)
-target_link_libraries(test_sign_ed25519 elliptic hashing ed25519 secp256k1)
-target_link_libraries(test_sign_secp256k1 elliptic hashing ed25519 secp256k1)
-target_link_libraries(test_hd_ed25519 elliptic hashing ed25519 secp256k1)
-target_link_libraries(test_hd_secp256k1 elliptic hashing ed25519 secp256k1)
+target_link_libraries(bench_hd_ed25519 elliptic)
+target_link_libraries(bench_hd_secp256k1 elliptic)
+target_link_libraries(bench_sign_ed25519 elliptic)
+target_link_libraries(bench_sign_secp256k1 elliptic)
+target_link_libraries(test_sign_ed25519 elliptic)
+target_link_libraries(test_sign_secp256k1 elliptic)
+target_link_libraries(test_hd_ed25519 elliptic)
+target_link_libraries(test_hd_secp256k1 elliptic)
 
 include(GNUInstallDirs)
 install(TARGETS elliptic
