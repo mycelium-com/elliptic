@@ -35,14 +35,14 @@ set_target_properties(elliptic PROPERTIES
    PUBLIC_HEADER "include/elliptic.h"
 )
 
-add_executable(bench_hd_ed25519 misc/bench_hd_ed25519.c $<TARGET_OBJECTS:elliptic>)
-add_executable(bench_hd_secp256k1 misc/bench_hd_secp256k1.c $<TARGET_OBJECTS:elliptic>)
-add_executable(bench_sign_ed25519 misc/bench_sign_ed25519.c $<TARGET_OBJECTS:elliptic>)
-add_executable(bench_sign_secp256k1 misc/bench_sign_secp256k1.c $<TARGET_OBJECTS:elliptic>)
-add_executable(test_sign_ed25519 misc/test_sign_ed25519.c $<TARGET_OBJECTS:elliptic>)
-add_executable(test_sign_secp256k1 misc/test_sign_secp256k1.c $<TARGET_OBJECTS:elliptic>)
-add_executable(test_hd_ed25519 misc/test_hd_ed25519.c $<TARGET_OBJECTS:elliptic>)
-add_executable(test_hd_secp256k1 misc/test_hd_secp256k1.c $<TARGET_OBJECTS:elliptic>)
+add_executable(bench_hd_ed25519 misc/bench_hd_ed25519.c)
+add_executable(bench_hd_secp256k1 misc/bench_hd_secp256k1.c)
+add_executable(bench_sign_ed25519 misc/bench_sign_ed25519.c)
+add_executable(bench_sign_secp256k1 misc/bench_sign_secp256k1.c)
+add_executable(test_sign_ed25519 misc/test_sign_ed25519.c)
+add_executable(test_sign_secp256k1 misc/test_sign_secp256k1.c)
+add_executable(test_hd_ed25519 misc/test_hd_ed25519.c)
+add_executable(test_hd_secp256k1 misc/test_hd_secp256k1.c)
 
 target_include_directories(bench_hd_ed25519 PRIVATE include)
 target_include_directories(bench_hd_secp256k1 PRIVATE include)
