@@ -64,6 +64,7 @@ target_link_libraries(test_hd_secp256k1 elliptic hashing ed25519 secp256k1)
 
 include(GNUInstallDirs)
 install(TARGETS elliptic
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 
