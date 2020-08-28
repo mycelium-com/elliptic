@@ -2,9 +2,15 @@ cmake_minimum_required(VERSION 3.9)
 project(elliptic VERSION 1.0.0 DESCRIPTION "Crypto primitives abstraction library")
 
 # Crypto primitives
+if (NOT TARGET hashing)
 add_subdirectory(extras/hashing)
+endif()
+if (NOT TARGET ed25519)
 add_subdirectory(extras/ed25519)
+endif()
+if (NOT TARGET secp256k1)
 add_subdirectory(extras/secp256k1)
+endif()
 
 set(elliptic_src
    src/sign.c
