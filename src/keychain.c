@@ -79,7 +79,7 @@ int elliptic_hd_init(EllipticHDContext *ctx, int type, const uint8_t *seed, size
 
     // Space for the private key
     uint8_t private_key[32];
-    
+
     // Get private key and chain code 
     switch(type) {
         case EllipticSecp256K1:

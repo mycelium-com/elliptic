@@ -52,7 +52,7 @@ int elliptic_init(EllipticContext *ctx, int type, const uint8_t *key, const uint
         ctx->EllipticType = type;
         ctx->HasPrivate = 0;
 
-        return 1;        
+        return 1;
     }
 
     // Neither public nor private key has been provided

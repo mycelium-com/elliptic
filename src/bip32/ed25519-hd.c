@@ -56,7 +56,7 @@ int ed25519_init_seed(const uint8_t *seed, int seed_len, uint8_t *private_key, u
     hmac_sha3_512_final(&hmac_ctx_ed25519, tmp, sizeof(tmp));
 
     // checking the private key condition
-	if(read(tmp[0], 5) != 0) {
+    if(read(tmp[0], 5) != 0) {
         return 0;
     }
 
