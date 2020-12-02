@@ -6,10 +6,6 @@
 #include "hmac_sha3.h"
 #include "ripemd160.h"
 
-inline static int read(x,y) {
-    return ((0u == (x & (1<<y)))?0u:1u);
-}
-
 // ed25519 key fingerprint
 static void BIP32Fingerprint(const uint8_t *public_key, uint8_t *public_key_id) {
     unsigned char tmp_hash[SHA3_256_DIGEST_LENGTH];
@@ -56,7 +52,7 @@ int ed25519_init_seed(const uint8_t *seed, int seed_len, uint8_t *private_key, u
     hmac_sha3_512_final(&hmac_ctx_ed25519, tmp, sizeof(tmp));
 
     // checking the private key condition
-    if(read(tmp[0], 5) != 0) {
+    if(!ed25519_verify_master_hash(tmp)) {
         return 0;
     }
 
