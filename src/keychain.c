@@ -154,7 +154,7 @@ static int derive_pub(const EllipticHDContext *ctx, EllipticHDContext *child_ctx
                 }
 
                 // Compute public key
-                secp256k1_get_pubkey(child_tmp, child_tmp);
+                myc_secp256k1_get_pubkey(child_tmp, child_tmp);
             }
             else {
                 // If we don't have private key then use public key
@@ -173,7 +173,7 @@ static int derive_pub(const EllipticHDContext *ctx, EllipticHDContext *child_ctx
 
                 // Compute public key
                 child_tmp[0] = 0x03;
-                ed25519_get_pubkey(child_tmp + 1, child_tmp + 1);
+                myc_ed25519_get_pubkey(child_tmp + 1, child_tmp + 1);
             }
             else {
                 // If we don't have private key then use public key

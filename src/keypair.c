@@ -22,10 +22,10 @@ int elliptic_init(EllipticContext *ctx, int type, const uint8_t *key, const uint
         switch(type) {
             case EllipticED25519:
                 ctx->PublicKey[0] = 0x03;
-                ed25519_get_pubkey(&ctx->PublicKey[1], key);
+                myc_ed25519_get_pubkey(&ctx->PublicKey[1], key);
                 break;
             case EllipticSecp256K1:
-                secp256k1_get_pubkey(&ctx->PublicKey[0], key);
+                myc_secp256k1_get_pubkey(&ctx->PublicKey[0], key);
                 break;
             default:
                 return 0;
